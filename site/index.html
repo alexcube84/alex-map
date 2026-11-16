@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>실거래가 지도</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font:14px/1.45 system-ui,"Malgun Gothic",sans-serif;color:#1c2530}
+#app{display:flex;height:100%}
+#side{width:360px;display:flex;flex-direction:column;border-right:1px solid #d5dbe2;background:#fff}
+#map{flex:1}
+h1{font-size:16px;margin:0;padding:12px 14px 4px}
+#upd{padding:0 14px 8px;color:#5c6875;font-size:12px}
+#filters{padding:8px 14px;border-top:1px solid #e6eaee;display:grid;grid-template-columns:72px 1fr;gap:6px 8px;align-items:center}
+#filters .pair{display:flex;gap:4px;align-items:center}
+input,select,button{font:inherit;padding:4px 6px;border:1px solid #b9c2cc;border-radius:4px;min-width:0;width:100%;background:#fff}
+button{cursor:pointer;width:auto}
+#filters .chk{grid-column:1/3;display:flex;gap:6px;align-items:center}
+#filters .chk input{width:auto}
+#sum{padding:8px 14px;background:#f3f6f9;border-top:1px solid #e6eaee;border-bottom:1px solid #e6eaee;font-size:13px}
+#bar{padding:6px 14px;display:flex;gap:6px;flex-wrap:wrap}
+#list{flex:1;overflow:auto}
+.it{padding:8px 14px;border-bottom:1px solid #eef1f4;cursor:pointer}
+.it:hover{background:#f6f9fc}
+.it b{font-weight:600}
+.it .sub{color:#5c6875;font-size:12px}
+.tag{font-size:11px;padding:0 4px;border-radius:3px;background:#fde9c8;color:#7a4b00;margin-left:4px}
+.tag.c{background:#f8d7da;color:#842029}
+@media(max-width:760px){#app{flex-direction:column-reverse}#side{width:100%;height:48%;border-right:0;border-top:1px solid #d5dbe2}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <h1>실거래가 지도</h1>
+    <div id="upd">자료를 불러오는 중…</div>
+    <div id="filters">
+      <label>유형·지역</label><select id="f-file"></select>
+      <label>거래연월</label><div class="pair"><input id="f-ym1" placeholder="202411" inputmode="numeric"><span>~</span><input id="f-ym2" placeholder="202611" inputmode="numeric"></div>
+      <label>면적(㎡)</label><div class="pair"><input id="f-a1" type="number" placeholder="최소"><span>~</span><input id="f-a2" type="number" placeholder="최대"></div>
+      <label>층</label><div class="pair"><input id="f-fl1" type="number" placeholder="최소"><span>~</span><input id="f-fl2" type="number" placeholder="최대"></div>
+      <label>금액(만원)</label><div class="pair"><input id="f-p1" type="number" placeholder="최소"><span>~</span><input id="f-p2" type="number" placeholder="최대"></div>
+      <label>건축연도</label><div class="pair"><input id="f-b1" type="number" placeholder="최소"><span>~</span><input id="f-b2" type="number" placeholder="최대"></div>
+      <label>이름·동</label><input id="f-q" placeholder="건물명 또는 법정동">
+      <label>반경</label><div class="pair"><select id="f-rad"><option value="0">사용 안 함</option><option value="300">300m</option><option value="500">500m</option><option value="1000">1km</option><option value="2000">2km</option></select></div>
+      <div class="chk"><input id="f-cancel" type="checkbox"><label for="f-cancel">해제(취소)된 거래 포함</label></div>
+      <div class="chk"><input id="f-view" type="checkbox"><label for="f-view">지도에 보이는 범위만</label></div>
+    </div>
+    <div id="sum"></div>
+    <div id="bar"><button id="b-xlsx">엑셀 저장</button><button id="b-reset">필터 초기화</button><select id="f-sort" style="width:auto"><option value="date">최근순</option><option value="unit">단가 높은순</option><option value="unit-">단가 낮은순</option></select></div>
+    <div id="list"></div>
+  </div>
+  <div id="map"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
