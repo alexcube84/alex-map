@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CFG = json.loads((ROOT / "collector/config.json").read_text(encoding="utf-8"))
 DATA = ROOT / "site/data"
 CACHE_PATH = ROOT / "collector/geocache.json"
-COLS = ["ym", "day", "name", "dong", "jibun", "area", "price", "floor", "built", "cancel", "lat", "lng", "approx"]
+COLS = ["ym", "day", "name", "dong", "jibun", "area", "price", "floor", "built", "cancel", "lat", "lng", "approx", "use", "area2"]
 
 
 def http_get(url, params, retries=3):
@@ -60,8 +60,9 @@ def fetch_month(t, region, ym, key, fetch=http_get):
     rows, page = [], 1
     while True:
         raw = fetch(t["url"], {"serviceKey": key, "LAWD_CD": region, "DEAL_YMD": ym, "pageNo": page, "numOfRows": 1000})
-        if page == 1 and not (ROOT / "collector/raw_sample.xml").exists():
-            (ROOT / "collector/raw_sample.xml").write_bytes(raw)  # 필드명 확인용 원본 1건
+        sample = ROOT / f"collector/raw_{t['id']}.xml"
+        if page == 1 and not sample.exists():
+            sample.write_bytes(raw)  # 유형별 필드명 확인용 원본 1건
         total, items = parse_items(raw)
         rows += items
         if len(rows) >= total or not items:
@@ -110,19 +111,48 @@ def geocode(addr, key, cache, fetch=http_get):
     return cache[addr]
 
 
+def dong_point(region_name, dong, key, cache, fetch=http_get):
+    """지번이 가려진 거래용 법정동 대표 좌표 (VWorld 행정구역 검색)."""
+    ck = f"동:{region_name} {dong}"
+    if ck in cache:
+        return cache[ck]
+    if not key:
+        return None
+    pt = None
+    try:
+        params = {"service": "search", "request": "search", "version": "2.0", "crs": "EPSG:4326", "size": "5",
+                  "page": "1", "query": f"{region_name} {dong}", "type": "district", "category": "L4",
+                  "format": "json", "errorformat": "json", "key": key}
+        domain = os.environ.get("VWORLD_DOMAIN", "").strip()
+        if domain:
+            params["domain"] = domain
+        res = json.loads(fetch("https://api.vworld.kr/req/search", params))["response"]
+        items = (res.get("result") or {}).get("items") or []
+        hit = next((x for x in items if str(x.get("title", "")).endswith(dong)), items[0] if items else None)
+        if hit and hit.get("point"):
+            pt = [round(float(hit["point"]["y"]), 6), round(float(hit["point"]["x"]), 6)]
+    except Exception as e:
+        print(f"::warning::법정동 좌표 실패 {region_name} {dong}: {e}")
+        return None
+    cache[ck] = pt
+    return pt
+
+
 def normalize(item, t, region_name, ym, vkey, cache, fetch=http_get):
     dong, jibun = item.get("umdNm", ""), item.get("jibun", "")
     exact = bool(jibun) and "*" not in jibun
     pt = geocode(f"{region_name} {dong} {jibun}", vkey, cache, fetch) if exact else None
     approx = 0
     if pt is None:  # 지번이 가려졌거나 못 찾으면 법정동 위치로 대체
-        pt = geocode(f"{region_name} {dong}", vkey, cache, fetch) if dong else None
+        pt = dong_point(region_name, dong, vkey, cache, fetch) if dong else None
         approx = 1
     return [ym, num(item.get("dealDay"), int), first(item, t["name_fields"]), dong, jibun,
             num(first(item, t["area_fields"])), num(item.get("dealAmount"), int),
             num(item.get("floor"), int), num(item.get("buildYear"), int),
             1 if item.get("cdealType") == "O" else 0,
-            pt[0] if pt else None, pt[1] if pt else None, approx if pt else None]
+            pt[0] if pt else None, pt[1] if pt else None, approx if pt else None,
+            " ".join(dict.fromkeys(item[f] for f in t.get("use_fields", []) if item.get(f))),
+            num(first(item, t.get("area2_fields", [])))]
 
 
 def main(fetch=http_get):
@@ -159,6 +189,7 @@ def main(fetch=http_get):
                 path.write_text(body, encoding="utf-8")
                 located = sum(1 for x in rows if x[10] is not None)
                 meta["files"].append({"type": t["id"], "label": t["label"], "region": r["code"], "name": r["name"],
+                                      "area_label": t.get("area_label", "면적"), "area2_label": t.get("area2_label", ""),
                                       "count": len(rows), "located": located,
                                       "approx": sum(1 for x in rows if x[12] == 1),
                                       "bytes": len(body.encode("utf-8"))})
@@ -168,6 +199,8 @@ def main(fetch=http_get):
         sys.exit("새로 받은 자료가 없습니다. 기존 자료를 유지합니다: " + "; ".join(meta["errors"]))
     DATA.mkdir(parents=True, exist_ok=True)
     (DATA / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+    for e in meta["errors"]:
+        print(f"::warning::{e}")
     for f in meta["files"]:
         print(f"{f['label']} {f['name']}: {f['count']}건, 좌표 {f['located']}건(추정 {f['approx']}), {f['bytes']/max(f['count'],1):.0f}바이트/건")
 

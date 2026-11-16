@@ -3,14 +3,96 @@
   "refresh_months": 3,
   "types": [
     {
+      "id": "apt_trade",
+      "label": "아파트 매매",
+      "url": "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade",
+      "name_fields": [
+        "aptNm"
+      ],
+      "area_fields": [
+        "excluUseAr"
+      ],
+      "use_fields": [],
+      "area2_fields": [],
+      "area_label": "전용면적",
+      "area2_label": ""
+    },
+    {
       "id": "offi_trade",
       "label": "오피스텔 매매",
       "url": "https://apis.data.go.kr/1613000/RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade",
-      "name_fields": ["offiNm"],
-      "area_fields": ["excluUseAr"]
+      "name_fields": [
+        "offiNm"
+      ],
+      "area_fields": [
+        "excluUseAr"
+      ],
+      "use_fields": [],
+      "area2_fields": [],
+      "area_label": "전용면적",
+      "area2_label": ""
+    },
+    {
+      "id": "nrg_trade",
+      "label": "상업업무용 매매",
+      "url": "https://apis.data.go.kr/1613000/RTMSDataSvcNrgTrade/getRTMSDataSvcNrgTrade",
+      "name_fields": [
+        "buildingUse"
+      ],
+      "area_fields": [
+        "buildingAr"
+      ],
+      "use_fields": [
+        "buildingType",
+        "landUse"
+      ],
+      "area2_fields": [
+        "plottageAr"
+      ],
+      "area_label": "건물면적",
+      "area2_label": "대지면적"
+    },
+    {
+      "id": "sh_trade",
+      "label": "단독다가구 매매",
+      "url": "https://apis.data.go.kr/1613000/RTMSDataSvcSHTrade/getRTMSDataSvcSHTrade",
+      "name_fields": [
+        "houseType"
+      ],
+      "area_fields": [
+        "totalFloorAr"
+      ],
+      "use_fields": [
+        "houseType"
+      ],
+      "area2_fields": [
+        "plottageAr"
+      ],
+      "area_label": "연면적",
+      "area2_label": "대지면적"
+    },
+    {
+      "id": "land_trade",
+      "label": "토지 매매",
+      "url": "https://apis.data.go.kr/1613000/RTMSDataSvcLandTrade/getRTMSDataSvcLandTrade",
+      "name_fields": [
+        "jimok"
+      ],
+      "area_fields": [
+        "dealArea"
+      ],
+      "use_fields": [
+        "landUse"
+      ],
+      "area2_fields": [],
+      "area_label": "거래면적",
+      "area2_label": ""
     }
   ],
   "regions": [
-    {"code": "11680", "name": "서울특별시 강남구"}
+    {
+      "code": "11680",
+      "name": "서울특별시 강남구"
+    }
   ]
 }
